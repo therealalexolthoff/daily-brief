@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 85
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.retry.outputs.page_url }}
     env:
       NEWS_TZ: America/New_York
     steps:
@@ -44,6 +44,7 @@ jobs:
         id: edition
         if: github.event_name != 'push'
         env:
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
           FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '1' || '' }}
         run: node scripts/scheduled-edition.js
       - name: Save the edition
@@ -64,7 +65,16 @@ jobs:
         if: github.event_name == 'push' || steps.edition.outputs.published == 'true'
         with:
           path: site
+      # GitHub sometimes doesn't list the upload for a moment, which fails the deploy; wait, then retry.
       - name: Deploy
         id: deploy
         if: github.event_name == 'push' || steps.edition.outputs.published == 'true'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+      - name: Wait before retrying the deploy
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 20
+      - name: Deploy (retry)
+        id: retry
+        if: steps.deploy.outcome == 'failure'
         uses: actions/deploy-pages@v5

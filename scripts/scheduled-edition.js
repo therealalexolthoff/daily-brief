@@ -9,6 +9,18 @@ import { latest, save } from '../lib/store.js';
 
 const MAX_WAIT = 65 * 60e3;
 const output = (v) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `published=${v}\n`);
+// True if the live site is showing something other than the newest saved edition
+// (an earlier run saved it but its deploy failed).
+async function liveIsStale(saved) {
+  if (!process.env.SITE_URL || !saved) return false;
+  try {
+    const r = await fetch(`${process.env.SITE_URL}/api/status.json?t=${Date.now()}`, { cache: 'no-store', signal: AbortSignal.timeout(15e3) });
+    return !r.ok || (await r.json()).compiledAt !== saved.compiledAt;
+  } catch {
+    return true;
+  }
+}
+
 const force = process.env.FORCE === '1';
 const have = await latest();
 let { current, next } = slots();
@@ -17,6 +29,11 @@ if (!force) {
   const missing = !have || have.slot < current;
   const wait = next - Date.now();
   if (!missing && wait > MAX_WAIT) {
+    if (await liveIsStale(have)) {
+      console.log(`Edition ${have.key} is saved but not live; deploying it again.`);
+      output('true');
+      process.exit();
+    }
     console.log(`Nothing to do: latest 5 PM edition is in, next is ${Math.round(wait / 60e3)} min away (${TZ}).`);
     output('false');
     process.exit();
