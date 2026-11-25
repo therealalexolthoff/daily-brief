@@ -44,9 +44,8 @@ jobs:
         id: edition
         if: github.event_name != 'push'
         env:
-          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
           FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '1' || '' }}
-        run: node scripts/scheduled-edition.js
+        run: SITE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}" node scripts/scheduled-edition.js
       - name: Save the edition
         if: steps.edition.outputs.published == 'true'
         run: |
