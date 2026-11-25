@@ -1,0 +1,14 @@
+{
+  "name": "daily-brief",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headline site that publishes a new edition every day at 5 PM",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "refresh": "node scripts/refresh.js",
+    "build": "node scripts/build-static.js",
+    "test": "node --test"
+  }
+}

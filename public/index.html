@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>The Daily Brief</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%238b1a1a'/%3E%3Cpath d='M3.5 5h9M3.5 8h9M3.5 11h5.5' stroke='%23fff' stroke-width='1.6'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to headlines</a>
+<div class="page">
+  <header class="masthead">
+    <div class="masthead-row">
+      <h1>The Daily Brief</h1>
+      <div class="next">
+        <span id="next-label">Next edition</span>
+        <span id="countdown" class="countdown">–</span>
+      </div>
+    </div>
+    <div class="dateline">
+      <span id="dateline">Loading…</span>
+      <label class="archive">Edition <select id="archive" aria-label="Choose an edition"></select></label>
+    </div>
+  </header>
+  <p id="notice" class="notice" role="status" hidden></p>
+  <nav id="nav" class="nav" aria-label="Sections"></nav>
+  <main id="main"></main>
+  <footer id="footer" class="footer"></footer>
+</div>
+<script src="app.js" type="module"></script>
+</body>
+</html>

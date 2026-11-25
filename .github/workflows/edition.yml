@@ -1,0 +1,70 @@
+name: Daily edition
+
+on:
+  schedule:
+    # UTC. Each run waits for 5 PM Eastern if it is close, and otherwise only acts if the edition is missing.
+    - cron: '20 20 * * *' # 4:20 PM EDT / 3:20 PM EST
+    - cron: '20 21 * * *' # 5:20 PM EDT / 4:20 PM EST
+    - cron: '40 22 * * *' # backup
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Build an edition right now
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: edition
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      NEWS_TZ: America/New_York
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main # always the newest saved editions, even if this run was queued
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Build the edition
+        id: edition
+        if: github.event_name != 'push'
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '1' || '' }}
+        run: node scripts/scheduled-edition.js
+      - name: Save the edition
+        if: steps.edition.outputs.published == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data
+          git diff --cached --quiet || git commit -m "Edition $(TZ=$NEWS_TZ date +%F)"
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Build the site
+        if: github.event_name == 'push' || steps.edition.outputs.published == 'true'
+        run: npm run build
+      - uses: actions/configure-pages@v6
+        if: github.event_name == 'push' || steps.edition.outputs.published == 'true'
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name == 'push' || steps.edition.outputs.published == 'true'
+        with:
+          path: site
+      - name: Deploy
+        id: deploy
+        if: github.event_name == 'push' || steps.edition.outputs.published == 'true'
+        uses: actions/deploy-pages@v5
